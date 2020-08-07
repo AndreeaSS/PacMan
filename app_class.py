@@ -17,6 +17,8 @@ class App:
         self.cell_width = s.MAZE_WIDTH//28
         self.cell_height = s.MAZE_HEIGHT//30
         self.player = p.Player(self, s.PLAYER_START_POS)
+        self.walls = []
+        self.coins = []
 
         self.load()
 
@@ -52,6 +54,15 @@ class App:
         self.background = pygame.image.load('maze.png')
         self.background = pygame.transform.scale(
             self.background, (s.MAZE_WIDTH, s.MAZE_HEIGHT))
+
+        # open walls file;create walls list with co-ords of walls
+        with open("walls.txt", 'r') as file:
+            for yidx, line in enumerate(file):
+                for xidx, char in enumerate(line):
+                    if char == "1":
+                        self.walls.append(vec(xidx, yidx))
+                    elif char == "C":
+                        self.coins.append(vec(xidx, yidx))
 
     def draw_grid(self):
         for x in range(s.WIDTH//self.cell_width):
@@ -106,10 +117,18 @@ class App:
         self.screen.fill(s.BLACK)
         self.screen.blit(self.background,
                          (s.TOP_BOTTOM_BUFFER//2, s.TOP_BOTTOM_BUFFER//2))
+        self.draw_coins()
         self.draw_grid()
         self.draw_text('HIGH SCORE: 0', self.screen, [s.WIDTH//2 + 60, 0],
                        s.START_TEXT_SIZE, s.WHITE, s.START_FONT)
-        self.draw_text('CURRENT SCORE: 0', self.screen, [100, 0],
-                       s.START_TEXT_SIZE, s.WHITE, s.START_FONT)
+        self.draw_text('CURRENT SCORE: {}'.format(self.player.current_score),
+                        self.screen, [100, 0], s.START_TEXT_SIZE, s.WHITE, s.START_FONT)
         self.player.draw()
         pygame.display.update()
+        # self.coins.pop()
+
+    def draw_coins(self):
+        for coin in self.coins:
+            pygame.draw.circle(self.screen, (124, 123, 7),
+            (int(coin.x*self.cell_width)+self.cell_width//2+ s.TOP_BOTTOM_BUFFER//2,
+             int(coin.y*self.cell_height)+self.cell_height//2+ s.TOP_BOTTOM_BUFFER//2), 5)
