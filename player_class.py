@@ -13,10 +13,11 @@ class Player:
         self.store_direction = None
         self.able_to_move = True
         self.current_score = 0
+        self.speed = 2
 
     def update(self):
         if self.able_to_move:
-            self.pix_pos += self.direction
+            self.pix_pos += self.direction*self.speed
         if self.time_to_move():
                 if self.store_direction != None:
                     self.direction = self.store_direction
@@ -48,7 +49,12 @@ class Player:
         #                  self.app.cell_width, self.app.cell_height), 1)
     def on_coin(self):
         if self.grid_pos in self.app.coins:
-            return True
+            if int(self.pix_pos.x+ s.TOP_BOTTOM_BUFFER//2) % self.app.cell_width == 0:
+                if self.direction == vec(1, 0) or self.direction == vec(-1, 0):
+                    return True
+            if int(self.pix_pos.y+ s.TOP_BOTTOM_BUFFER//2) % self.app.cell_height == 0:
+                if self.direction == vec(0, 1) or self.direction == vec(0, -1):
+                    return True
         return False
 
     def eat_coin(self):

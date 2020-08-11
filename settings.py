@@ -18,6 +18,6 @@ START_TEXT_SIZE = 16
 START_FONT = 'arial black'
 
 # player settings
-PLAYER_START_POS = vec(1, 1)
+#PLAYER_START_POS = vec(2, 2)
 
 # mob settings
