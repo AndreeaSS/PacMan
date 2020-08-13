@@ -4,6 +4,8 @@ from pygame.math import Vector2 as vec
 WIDTH, HEIGHT = 610, 670
 TOP_BOTTOM_BUFFER = 50
 MAZE_WIDTH, MAZE_HEIGHT = WIDTH - TOP_BOTTOM_BUFFER, HEIGHT - TOP_BOTTOM_BUFFER
+COLS = 28
+ROWS = 30
 FPS = 60
 
 # colour settings

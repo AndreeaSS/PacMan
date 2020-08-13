@@ -1,5 +1,6 @@
 import pygame
 import sys
+import copy
 import settings as s
 import player_class as p
 from enemy_class import *
@@ -16,15 +17,17 @@ class App:
         self.clock = pygame.time.Clock()
         self.running = True
         self.state = 'start screen'
-        self.cell_width = s.MAZE_WIDTH//28
-        self.cell_height = s.MAZE_HEIGHT//30
+        self.cell_width = s.MAZE_WIDTH//s.COLS
+        self.cell_height = s.MAZE_HEIGHT//s.ROWS
         self.walls = []
         self.coins = []
+        self.bonus = []
+        self.scared_enemies = 0
         self.enemies = []
         self.e_pos = []
         self.p_pos = None
         self.load()
-        self.player = p.Player(self, self.p_pos)
+        self.player = p.Player(self, vec(self.p_pos))
         self.make_enemies()
 
     def run(self):
@@ -37,6 +40,10 @@ class App:
                 self.play_events()
                 self.play_update()
                 self.play_draw()
+            elif self.state == 'game over':
+                self.game_over_events()
+                self.game_over_update()
+                self.game_over_draw()
             else:
                 self.running = False
             self.clock.tick(s.FPS)
@@ -68,10 +75,12 @@ class App:
                         self.walls.append(vec(xidx, yidx))
                     elif char == "C":
                         self.coins.append(vec(xidx, yidx))
+                    elif char == "H":
+                        self.bonus.append(vec(xidx, yidx))
                     elif char == "P":
-                        self.p_pos = vec(xidx, yidx)
+                        self.p_pos = [xidx, yidx]
                     elif char in ["2","3","4","5"]:
-                        self.e_pos.append(vec(xidx, yidx))
+                        self.e_pos.append([xidx, yidx])
                     elif char == "B":
                         pygame.draw.rect(self.background, BLACK, (xidx*self.cell_width, yidx*self.cell_height,
                                                                   self.cell_width, self.cell_height))
@@ -91,6 +100,24 @@ class App:
                              (0, y * self.cell_height),
                              (s.WIDTH, y * self.cell_height))
 
+    def reset(self):
+        self.player.lives = 3
+        self.player.current_score = 0
+        self.player.grid_pos = vec(self.player.starting_pos)
+        self.player.pix_pos = self.player.get_pix_pos()
+        self.player.direction *= 0
+        for enemy in self.enemies:
+            enemy.grid_pos = vec(enemy.starting_pos)
+            enemy.pix_pos = enemy.get_pix_pos()
+            enemy.direction *= 0
+        self.coins = []
+        with open("walls.txt", 'r') as file:
+            for yidx, line in enumerate(file):
+                for xidx, char in enumerate(line):
+                    if char == "C":
+                        self.coins.append(vec(xidx, yidx))
+        self.state = "play"
+
 # INTRO
 
     def start_events(self):
@@ -108,8 +135,6 @@ class App:
         self.draw_text('PRESS SPACE', self.screen, [s.WIDTH//2, s.HEIGHT//2],
                        s.START_TEXT_SIZE, (170, 132, 58), s.START_FONT,
                        centered=True)
-        self.draw_text('HIGH SCORE', self.screen, [4, 0],
-                       s.START_TEXT_SIZE, s.WHITE, s.START_FONT)
         pygame.display.update()
 
 # PLAY SCREEN
@@ -129,28 +154,76 @@ class App:
                     self.player.move(vec(0, 1))
 
     def play_update(self):
+        if self.scared_enemies > 0:
+            self.scared_enemies -= 1
         self.player.update()
         for enemy in self.enemies:
             enemy.update()
+
+        for enemy in self.enemies:
+            if enemy.grid_pos == self.player.grid_pos and self.scared_enemies == 0:
+                self.remove_life()
+            elif enemy.grid_pos == self.player.grid_pos and self.scared_enemies != 0:
+                self.remove_enemy(enemy)
 
     def play_draw(self):
         self.screen.fill(s.BLACK)
         self.screen.blit(self.background,
                          (s.TOP_BOTTOM_BUFFER//2, s.TOP_BOTTOM_BUFFER//2))
         self.draw_coins()
-        #self.draw_grid()
-        self.draw_text('HIGH SCORE: 0', self.screen, [s.WIDTH//2 + 60, 0],
-                       s.START_TEXT_SIZE, s.WHITE, s.START_FONT)
         self.draw_text('CURRENT SCORE: {}'.format(self.player.current_score),
-                        self.screen, [100, 0], s.START_TEXT_SIZE, s.WHITE, s.START_FONT)
+                        self.screen, [230, 0], s.START_TEXT_SIZE, s.WHITE, s.START_FONT)
         self.player.draw()
         for enemy in self.enemies:
             enemy.draw()
         pygame.display.update()
-        # self.coins.pop()
+
+    def remove_life(self):
+        self.player.lives -= 1
+        if self.player.lives == 0:
+            self.state = "game over"
+        else:
+            self.player.grid_pos = vec(self.player.starting_pos)
+            self.player.pix_pos = self.player.get_pix_pos()
+            self.player.direction *= 0
+            for enemy in self.enemies:
+                enemy.grid_pos = vec(enemy.starting_pos)
+                enemy.pix_pos = enemy.get_pix_pos()
+                enemy.direction *= 0
+
+    def remove_enemy(self, to_eat):
+        self.enemies.remove(to_eat)
+        self.player.current_score += 150
 
     def draw_coins(self):
         for coin in self.coins:
             pygame.draw.circle(self.screen, (124, 123, 7),
             (int(coin.x*self.cell_width)+self.cell_width//2+ s.TOP_BOTTOM_BUFFER//2,
              int(coin.y*self.cell_height)+self.cell_height//2+ s.TOP_BOTTOM_BUFFER//2), 5)
+            for plus in self.bonus:
+                pygame.draw.circle(self.screen, (0, 100, 10),
+                (int(plus.x*self.cell_width)+self.cell_width//2+ s.TOP_BOTTOM_BUFFER//2,
+                 int(plus.y*self.cell_height)+self.cell_height//2+ s.TOP_BOTTOM_BUFFER//2), 10)
+
+# GAME OVER
+
+    def game_over_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                self.reset()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                self.running = False
+
+    def game_over_draw(self):
+        self.screen.fill(s.BLACK)
+        quit_text = "Press the ESC key to quit"
+        again_text = "Press SPACE bar to play again"
+        self.draw_text("GAME OVER", self.screen, [s.WIDTH//2, 100], 52, s.RED, "arial", centered = True)
+        self.draw_text(again_text, self.screen, [s.WIDTH//2, s.HEIGHT//2], 36, (190, 190, 190), "arial", centered = True)
+        self.draw_text(quit_text, self.screen, [s.WIDTH//2, s.HEIGHT//1.5], 36, (190, 190, 190), "arial", centered = True)
+        pygame.display.update()
+
+    def game_over_update(self):
+        pass
