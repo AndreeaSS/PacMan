@@ -89,6 +89,8 @@ class App:
         for idx, pos in enumerate(self.e_pos):
             self.enemies.append(Enemy(self, vec(pos), idx))
 
+        self.enemies.remove(self.enemies[3])
+
 
 
     def draw_grid(self):

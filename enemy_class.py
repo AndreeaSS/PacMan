@@ -1,6 +1,7 @@
 import pygame
 import random
 import settings as s
+from timeit import default_timer as timer
 
 vec = pygame.math.Vector2
 

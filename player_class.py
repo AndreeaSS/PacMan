@@ -84,8 +84,6 @@ class Player:
                            (self.grid_pos.y * self.app.cell_height)
                            + s.TOP_BOTTOM_BUFFER//2 + self.app.cell_height//2)
 
-        print(self.grid_pos, self.pix_pos)
-
     def time_to_move(self):
         if int(self.pix_pos.x+ s.TOP_BOTTOM_BUFFER//2) % self.app.cell_width == 0:
             if self.direction == vec(1, 0) or self.direction == vec(-1, 0) or self.direction == vec(0, 0):
