@@ -42,8 +42,10 @@ class App:
                 self.play_draw()
             elif self.state == 'game over':
                 self.game_over_events()
-                self.game_over_update()
                 self.game_over_draw()
+            elif self.state == 'game won':
+                self.game_won_events()
+                self.game_won_draw()
             else:
                 self.running = False
             self.clock.tick(s.FPS)
@@ -108,10 +110,8 @@ class App:
         self.player.grid_pos = vec(self.player.starting_pos)
         self.player.pix_pos = self.player.get_pix_pos()
         self.player.direction *= 0
-        for enemy in self.enemies:
-            enemy.grid_pos = vec(enemy.starting_pos)
-            enemy.pix_pos = enemy.get_pix_pos()
-            enemy.direction *= 0
+        self.enemies = []
+        self.make_enemies()
         self.coins = []
         with open("walls.txt", 'r') as file:
             for yidx, line in enumerate(file):
@@ -196,6 +196,8 @@ class App:
     def remove_enemy(self, to_eat):
         self.enemies.remove(to_eat)
         self.player.current_score += 150
+        if not self.enemies:
+            self.state = "game won"
 
     def draw_coins(self):
         for coin in self.coins:
@@ -223,9 +225,29 @@ class App:
         quit_text = "Press the ESC key to quit"
         again_text = "Press SPACE bar to play again"
         self.draw_text("GAME OVER", self.screen, [s.WIDTH//2, 100], 52, s.RED, "arial", centered = True)
+        self.draw_text(str(self.player.current_score), self.screen, [s.WIDTH//2, 200], 82, s.RED, "arial", centered = True)
         self.draw_text(again_text, self.screen, [s.WIDTH//2, s.HEIGHT//2], 36, (190, 190, 190), "arial", centered = True)
         self.draw_text(quit_text, self.screen, [s.WIDTH//2, s.HEIGHT//1.5], 36, (190, 190, 190), "arial", centered = True)
         pygame.display.update()
 
-    def game_over_update(self):
-        pass
+
+# GAME WON
+
+    def game_won_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                self.reset()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                self.running = False
+
+    def game_won_draw(self):
+        self.screen.fill(s.BLACK)
+        quit_text = "Press the ESC key to quit"
+        again_text = "Press SPACE bar to play again"
+        self.draw_text("WINNER", self.screen, [s.WIDTH//2, 100], 52, s.RED, "arial", centered = True)
+        self.draw_text(str(self.player.current_score), self.screen, [s.WIDTH//2, 200], 82, s.RED, "arial", centered = True)
+        self.draw_text(again_text, self.screen, [s.WIDTH//2, s.HEIGHT//2], 36, (190, 190, 190), "arial", centered = True)
+        self.draw_text(quit_text, self.screen, [s.WIDTH//2, s.HEIGHT//1.5], 36, (190, 190, 190), "arial", centered = True)
+        pygame.display.update()
