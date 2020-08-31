@@ -34,7 +34,6 @@ class App:
         while self.running:
             if self.state == 'start screen':
                 self.start_events()
-                self.start_update()
                 self.start_draw()
             elif self.state == 'play':
                 self.play_events()
@@ -81,7 +80,7 @@ class App:
                         self.bonus.append(vec(xidx, yidx))
                     elif char == "P":
                         self.p_pos = [xidx, yidx]
-                    elif char in ["2","3","4","5"]:
+                    elif char in ["2","4","5"]:
                         self.e_pos.append([xidx, yidx])
                     elif char == "B":
                         pygame.draw.rect(self.background, BLACK, (xidx*self.cell_width, yidx*self.cell_height,
@@ -90,19 +89,6 @@ class App:
     def make_enemies(self):
         for idx, pos in enumerate(self.e_pos):
             self.enemies.append(Enemy(self, vec(pos), idx))
-
-        self.enemies.remove(self.enemies[3])
-
-
-
-    def draw_grid(self):
-        for x in range(s.WIDTH//self.cell_width):
-            pygame.draw.line(self.background, s.GREY, (x * self.cell_width, 0),
-                             (x * self.cell_width, s.HEIGHT))
-        for y in range(s.HEIGHT//self.cell_height):
-            pygame.draw.line(self.background, s.GREY,
-                             (0, y * self.cell_height),
-                             (s.WIDTH, y * self.cell_height))
 
     def reset(self):
         self.player.lives = 3
@@ -128,9 +114,6 @@ class App:
                 self.running = False
             if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 self.state = 'play'
-
-    def start_update(self):
-        pass
 
     def start_draw(self):
         self.screen.fill(s.BLACK)
